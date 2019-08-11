@@ -12,8 +12,11 @@ struct Person {
 
 struct Person *Person_create (char *name, int age, int height, int weight)
 {
+	// Allocate the proper amount of memory for the struct
 	struct Person *who = malloc(sizeof(struct Person));
+	// This should succeed, so who should not be null
 	assert(who != NULL);
+	// Assign each field of the struct
 	who->name = strdup(name);
 	who->age = age;
 	who->height = height;
@@ -24,7 +27,9 @@ struct Person *Person_create (char *name, int age, int height, int weight)
 
 void Person_destroy (struct Person *who)
 {
+	// If it's null, we don't have to free it
 	assert(who != NULL);
+	// who->name is also on the heap and has to be freed separately
 	free(who->name);
 	free(who);
 }
