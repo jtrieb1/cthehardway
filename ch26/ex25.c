@@ -90,6 +90,73 @@ error:
     return -1;
 }
 
+char *num_to_string(unsigned int num) {
+    static char *repr = "0123456789";
+    static char buffer[50];
+    char *ptr;
+
+    ptr = &buffer[49];
+    *ptr = '\0';
+
+    do {
+        *--ptr = repr[num % 10];
+        num /= 10;
+    } while (num != 0);
+
+    return ptr;
+}
+
+int write_fmt(char const *fmt, ...)
+{
+    int i = 0;
+    int out_numeric;
+    char *out_s;
+
+    va_list argp;
+    va_start(argp, fmt);
+
+    for (; fmt[i] != '\0'; i++) {
+        if (fmt[i] == '%') {
+            i++;
+            switch (fmt[i]) {
+                case '\0':
+                    sentinel("Invalid format, ended with %%.");
+                    break;
+                case 'd':
+                    out_numeric = va_arg(argp, int);
+                    if (out_numeric < 0) {
+                        out_numeric *= -1;
+                        putchar('-');
+                    }
+                    fputs(num_to_string(out_numeric), stdout);
+                    break;
+                case 'c':
+                    out_numeric = va_arg(argp, int);
+                    putchar(out_numeric);
+                    break;
+                case 's':
+                    out_s = va_arg(argp, char *);
+                    out_s[strcspn(out_s, "\r\n")] = 0; // Remove trailing newline from fgets.
+                    fputs(out_s, stdout);
+                    break;
+                default:
+                    sentinel("Invalid format.");
+            }
+        } else {
+            putchar(fmt[i]);
+        }
+        
+        check(!ferror(stdout), "Output error.");
+    }
+
+    va_end(argp);
+    return 0;
+
+error:
+    va_end(argp);
+    return -1;
+}
+
 int main(int argc, char *argv[])
 {
     char *first_name = NULL;
@@ -97,27 +164,27 @@ int main(int argc, char *argv[])
     char *last_name = NULL;
     int age = 0;
 
-    printf("What's your first name?");
+    write_fmt("What's your first name? ");
     int rc = read_scan("%s", MAX_DATA, &first_name);
     check(rc == 0, "Failed to read first name.");
 
-    printf("What's your middle initial?");
+    write_fmt("What's your middle initial? ");
     rc = read_scan("%c\n", &initial);
     check(rc == 0, "Failed to read initial.");
 
-    printf("What's your last name?");
+    write_fmt("What's your last name? ");
     rc = read_scan("%s", MAX_DATA, &last_name);
     check(rc == 0, "Failed to read last name.");
 
-    printf("How old are you?");
+    write_fmt("How old are you? ");
     rc = read_scan("%d", &age);
     check(rc == 0, "Failed to read age.");
 
-    printf("---- RESULTS ----\n");
-    printf("First Name: %s", first_name);
-    printf("Middle Initial: '%c'\n", initial);
-    printf("Last Name: %s", last_name);
-    printf("Age: %d\n", age);
+    write_fmt("---- RESULTS ----\n");
+    write_fmt("First Name: %s\n", first_name);
+    write_fmt("Middle Initial: %c.\n", initial);
+    write_fmt("Last Name: %s\n", last_name);
+    write_fmt("Age: %d\n", age);
 
     free(first_name);
     free(last_name);
